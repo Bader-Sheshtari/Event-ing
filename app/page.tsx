@@ -1,6 +1,9 @@
 import Link from "next/link";
 import EventCard from "@/components/EventCard";
-import { MOCK_EVENTS, CATEGORY_LABELS, CATEGORY_ICONS, EventCategory } from "@/lib/data";
+import { CATEGORY_LABELS, CATEGORY_ICONS, EventCategory } from "@/lib/data";
+import { getEvents } from "@/lib/events";
+
+export const dynamic = "force-dynamic";
 
 const FEATURED_CATEGORIES: { key: EventCategory; color: string }[] = [
   { key: "music",           color: "bg-teal-50 text-teal-700 border-teal-200 hover:border-teal-400" },
@@ -20,9 +23,13 @@ const STATS = [
   { value: "Free", label: "To Browse & Share" },
 ];
 
-export default function HomePage() {
-  const freeEvents     = MOCK_EVENTS.filter((e) => e.is_free && e.status === "active").slice(0, 3);
-  const featuredEvents = MOCK_EVENTS.filter((e) => e.status === "active").slice(0, 6);
+export default async function HomePage() {
+  const [featuredEvents, freeEvents] = await Promise.all([
+    getEvents({ status: "active" }),
+    getEvents({ status: "active", is_free: true }),
+  ]);
+  const featured = featuredEvents.slice(0, 6);
+  const free     = freeEvents.slice(0, 3);
 
   return (
     <div className="flex flex-col">
@@ -115,7 +122,7 @@ export default function HomePage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {FEATURED_CATEGORIES.map(({ key, color }) => {
-            const count = MOCK_EVENTS.filter((e) => e.category === key).length;
+            const count = featuredEvents.filter((e) => e.category === key).length;
             return (
               <Link
                 key={key}
@@ -144,7 +151,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {featuredEvents.map((event) => (
+            {featured.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
@@ -167,7 +174,7 @@ export default function HomePage() {
             <p className="text-gray-500 mt-1">Great experiences don&apos;t have to cost a thing.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {freeEvents.map((event) => (
+            {free.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>

@@ -1,24 +1,22 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MOCK_EVENTS, CATEGORY_LABELS, CATEGORY_ICONS, formatDate, formatTime } from "@/lib/data";
+import { CATEGORY_LABELS, CATEGORY_ICONS, formatDate, formatTime } from "@/lib/data";
+import { getEventById, getEvents } from "@/lib/events";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-export async function generateStaticParams() {
-  return MOCK_EVENTS.map((e) => ({ id: e.id }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function EventDetailPage({ params }: Props) {
   const { id } = await params;
-  const event = MOCK_EVENTS.find((e) => e.id === id);
+  const event = await getEventById(id);
   if (!event) notFound();
 
-  const related = MOCK_EVENTS
-    .filter((e) => e.id !== event.id && e.category === event.category)
-    .slice(0, 3);
+  const allEvents = await getEvents({ category: event.category });
+  const related = allEvents.filter((e) => e.id !== event.id).slice(0, 3);
 
   const spotsLeft = event.available_spots;
   const lowSpots  = spotsLeft <= 20;
