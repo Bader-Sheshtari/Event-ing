@@ -15,11 +15,11 @@ export default async function EventDetailPage({ params }: Props) {
   const event = await getEventById(id);
   if (!event) notFound();
 
-  const allEvents = await getEvents({ category: event.category });
+  const allEvents = await getEvents({ category: event.category }).catch(() => []);
   const related = allEvents.filter((e) => e.id !== event.id).slice(0, 3);
 
-  const spotsLeft = event.available_spots;
-  const lowSpots  = spotsLeft <= 20;
+  const spotsLeft = event.available_spots ?? 0;
+  const lowSpots  = spotsLeft > 0 && spotsLeft <= 20;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
