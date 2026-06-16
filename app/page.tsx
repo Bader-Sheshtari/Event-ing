@@ -25,8 +25,8 @@ const STATS = [
 
 export default async function HomePage() {
   const [featuredEvents, freeEvents] = await Promise.all([
-    getEvents({ status: "active" }),
-    getEvents({ status: "active", is_free: true }),
+    getEvents({ status: "active" }).catch(() => []),
+    getEvents({ status: "active", is_free: true }).catch(() => []),
   ]);
   const featured = featuredEvents.slice(0, 6);
   const free     = freeEvents.slice(0, 3);
