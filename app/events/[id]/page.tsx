@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CATEGORY_LABELS, CATEGORY_ICONS, formatDate, formatTime } from "@/lib/data";
 import { getEventById, getEvents } from "@/lib/events";
+import BookingForm from "@/components/BookingForm";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -204,19 +205,12 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
 
             <div className="border-t border-teal-50 pt-4">
-              {event.status === "active" ? (
-                <button className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3.5 rounded-2xl transition-all shadow-md hover:shadow-lg text-sm">
-                  {event.is_free ? "Register — It's Free!" : `Get Tickets — AED ${event.price}`}
-                </button>
-              ) : (
-                <div className={`text-center py-3 rounded-2xl text-sm font-semibold ${
-                  event.status === "cancelled"
-                    ? "bg-red-50 text-red-500"
-                    : "bg-gray-100 text-gray-500"
-                }`}>
-                  {event.status === "cancelled" ? "Event Cancelled" : "Event Completed"}
-                </div>
-              )}
+              <BookingForm
+                eventId={event.id}
+                isFree={event.is_free}
+                price={event.price}
+                status={event.status}
+              />
             </div>
 
             <Link
