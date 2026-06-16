@@ -41,6 +41,16 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          <Link
+            href="/events/new"
+            className={`ml-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+              pathname === "/events/new"
+                ? "bg-coral-500 text-white shadow-md"
+                : "bg-coral-400 text-white hover:bg-coral-500 shadow-sm"
+            }`}
+          >
+            + Create Event
+          </Link>
         </div>
 
         {/* Mobile hamburger */}
@@ -76,6 +86,13 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          <Link
+            href="/events/new"
+            onClick={() => setMenuOpen(false)}
+            className="px-4 py-2.5 rounded-xl text-sm font-bold bg-coral-400 text-white hover:bg-coral-500 transition-all text-center mt-1"
+          >
+            + Create Event
+          </Link>
         </div>
       )}
     </nav>
