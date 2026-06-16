@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 import { Event, EventCategory, EventStatus } from "./data";
 
 export async function getEvents(filters?: {
@@ -7,6 +7,7 @@ export async function getEvents(filters?: {
   is_free?: boolean;
   search?: string;
 }): Promise<Event[]> {
+  const supabase = getSupabase();
   let query = supabase.from("events").select("*");
 
   if (filters?.category) query = query.eq("category", filters.category);
@@ -26,6 +27,7 @@ export async function getEvents(filters?: {
 }
 
 export async function getEventById(id: string): Promise<Event | null> {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from("events")
     .select("*")
