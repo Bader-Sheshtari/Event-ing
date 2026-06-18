@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CATEGORY_LABELS, CATEGORY_ICONS, formatDate, formatTime } from "@/lib/data";
 import { getEventById, getEvents } from "@/lib/events";
 import BookingForm from "@/components/BookingForm";
+import OwnerControls from "@/components/OwnerControls";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -212,6 +213,8 @@ export default async function EventDetailPage({ params }: Props) {
                 status={event.status}
               />
             </div>
+
+            <OwnerControls eventId={event.id} ownerId={event.user_id ?? null} />
 
             <Link
               href="/events"

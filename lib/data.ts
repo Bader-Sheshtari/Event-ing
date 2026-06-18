@@ -28,6 +28,7 @@ export interface Event {
   contact_details: string;
   status: EventStatus;
   created_at: string;
+  user_id?: string | null;
 }
 
 export const CATEGORY_LABELS: Record<EventCategory, string> = {

@@ -3,7 +3,7 @@
 import { useState, useRef, ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getSupabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-browser";
 import { CATEGORY_LABELS, CATEGORY_ICONS, EventCategory } from "@/lib/data";
 
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as EventCategory[];
@@ -60,7 +60,12 @@ export default function NewEventPage() {
 
     setUploading(true);
     try {
-      const supabase = getSupabase();
+      const supabase = createClient();
+
+      // Ensure user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setError("You must be signed in to create an event."); setUploading(false); return; }
+
       let image_url  = "";
 
       // 1. Upload image if provided
@@ -98,6 +103,7 @@ export default function NewEventPage() {
           available_spots: form.available_spots ? parseInt(form.available_spots) : null,
           contact_details: form.contact_details.trim(),
           status:          "active",
+          user_id:         user.id,
         })
         .select("id")
         .single();
