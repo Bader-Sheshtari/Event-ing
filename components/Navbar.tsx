@@ -1,21 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase-browser";
+import type { User } from "@supabase/supabase-js";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router   = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user,     setUser]     = useState<User | null>(null);
 
   const links = [
-    { href: "/", label: "Home" },
+    { href: "/",       label: "Home" },
     { href: "/events", label: "Browse Events" },
   ];
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-teal-100 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-9 h-9 rounded-xl bg-teal-500 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
@@ -41,16 +62,47 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/events/new"
-            className={`ml-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
-              pathname === "/events/new"
-                ? "bg-coral-500 text-white shadow-md"
-                : "bg-coral-400 text-white hover:bg-coral-500 shadow-sm"
-            }`}
-          >
-            + Create Event
-          </Link>
+
+          {user ? (
+            <>
+              <Link
+                href="/events/new"
+                className={`ml-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                  pathname === "/events/new"
+                    ? "bg-coral-500 text-white shadow-md"
+                    : "bg-coral-400 text-white hover:bg-coral-500 shadow-sm"
+                }`}
+              >
+                + Create Event
+              </Link>
+              <div className="ml-2 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">
+                  {user.email?.[0].toUpperCase()}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-gray-500 hover:text-red-500 font-medium transition-colors"
+                >
+                  Sign out
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="ml-2 flex items-center gap-2">
+              <Link
+                href="/auth/login"
+                className="px-4 py-2 rounded-full text-sm font-medium text-teal-800 hover:bg-teal-50 transition-all"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/register"
+                className="px-4 py-2 rounded-full text-sm font-bold bg-coral-400 text-white hover:bg-coral-500 shadow-sm transition-all"
+              >
+                Register
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -78,21 +130,40 @@ export default function Navbar() {
               href={l.href}
               onClick={() => setMenuOpen(false)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                pathname === l.href
-                  ? "bg-teal-500 text-white"
-                  : "text-teal-800 hover:bg-teal-50"
+                pathname === l.href ? "bg-teal-500 text-white" : "text-teal-800 hover:bg-teal-50"
               }`}
             >
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/events/new"
-            onClick={() => setMenuOpen(false)}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold bg-coral-400 text-white hover:bg-coral-500 transition-all text-center mt-1"
-          >
-            + Create Event
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/events/new"
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-sm font-bold bg-coral-400 text-white hover:bg-coral-500 transition-all text-center mt-1"
+              >
+                + Create Event
+              </Link>
+              <div className="flex items-center justify-between px-4 py-2.5 mt-1 bg-teal-50 rounded-xl">
+                <span className="text-sm text-teal-700 font-medium truncate">{user.email}</span>
+                <button onClick={handleLogout} className="text-sm text-red-400 font-semibold ml-2">
+                  Sign out
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Link href="/auth/login" onClick={() => setMenuOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-sm font-medium text-teal-800 hover:bg-teal-50 transition-all text-center mt-1">
+                Sign In
+              </Link>
+              <Link href="/auth/register" onClick={() => setMenuOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-sm font-bold bg-coral-400 text-white hover:bg-coral-500 transition-all text-center">
+                Register
+              </Link>
+            </>
+          )}
         </div>
       )}
     </nav>
