@@ -22,25 +22,20 @@ export async function POST(req: NextRequest) {
     const callbackBase = `${APP_URL}/events/${event_id}/booking`;
 
     const body = {
-      PaymentMethodId: 0,           // 0 = show all available methods
-      CustomerName:    attendee_name,
-      DisplayCurrencyIso: "KWD",    // test env is KWD
-      MobileCountryCode: "+965",
-      CustomerMobile:  "00000000",  // optional placeholder
-      CustomerEmail:   attendee_email,
-      InvoiceValue:    price,
-      CallBackUrl:     `${callbackBase}/success?d=${attendeePayload}`,
-      ErrorUrl:        `${callbackBase}/error?d=${attendeePayload}`,
-      Language:        "en",
+      PaymentMethodId:   2, // VISA/MASTER
+      CustomerName:      attendee_name,
+      CustomerEmail:     attendee_email,
+      InvoiceValue:      Number(price),
+      CallBackUrl:       `${callbackBase}/success?d=${attendeePayload}`,
+      ErrorUrl:          `${callbackBase}/error?d=${attendeePayload}`,
+      Language:          "en",
       CustomerReference: event_id,
-      UserDefinedField: event_title ?? "",
-      ExpireDate:      "",
-      CustomerAddress: {},
+      UserDefinedField:  (event_title ?? "").slice(0, 500),
       InvoiceItems: [
         {
-          ItemName:  event_title ?? "Event Ticket",
+          ItemName:  (event_title ?? "Event Ticket").slice(0, 100),
           Quantity:  1,
-          UnitPrice: price,
+          UnitPrice: Number(price),
         },
       ],
     };
@@ -57,6 +52,7 @@ export async function POST(req: NextRequest) {
     const mfData = await mfRes.json();
 
     if (!mfData.IsSuccess) {
+      console.error("MyFatoorah error:", JSON.stringify(mfData));
       return NextResponse.json(
         { error: mfData.Message ?? "MyFatoorah payment initiation failed." },
         { status: 502 }
