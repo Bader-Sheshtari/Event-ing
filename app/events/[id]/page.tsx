@@ -208,6 +208,7 @@ export default async function EventDetailPage({ params }: Props) {
             <div className="border-t border-teal-50 pt-4">
               <BookingForm
                 eventId={event.id}
+                eventTitle={event.title}
                 isFree={event.is_free}
                 price={event.price}
                 status={event.status}

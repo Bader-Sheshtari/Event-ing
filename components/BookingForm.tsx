@@ -3,10 +3,11 @@
 import { useState, FormEvent } from "react";
 
 interface Props {
-  eventId:  string;
-  isFree:   boolean;
-  price:    number;
-  status:   string;
+  eventId:    string;
+  eventTitle: string;
+  isFree:     boolean;
+  price:      number;
+  status:     string;
 }
 
 interface ConfirmationResult {
@@ -20,7 +21,7 @@ interface ConfirmationResult {
 
 const EDGE_URL = "https://vuzfbiwdhyynlachjnjf.supabase.co/functions/v1/confirm-booking";
 
-export default function BookingForm({ eventId, isFree, price, status }: Props) {
+export default function BookingForm({ eventId, eventTitle, isFree, price, status }: Props) {
   const [name,    setName]    = useState("");
   const [email,   setEmail]   = useState("");
   const [message, setMessage] = useState("");
@@ -61,26 +62,48 @@ export default function BookingForm({ eventId, isFree, price, status }: Props) {
     setLoading(true);
 
     try {
-      const res = await fetch(EDGE_URL, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event_id:       eventId,
-          attendee_name:  name.trim(),
-          attendee_email: email.trim(),
-          message:        message.trim() || undefined,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Booking failed.");
-      setResult(data);
+      if (isFree) {
+        // Free event — call edge function directly
+        const res = await fetch(EDGE_URL, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_id:       eventId,
+            attendee_name:  name.trim(),
+            attendee_email: email.trim(),
+            message:        message.trim() || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Booking failed.");
+        setResult(data);
+      } else {
+        // Paid event — go through MyFatoorah
+        const res = await fetch("/api/payment/initiate", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_id:       eventId,
+            event_title:    eventTitle,
+            attendee_name:  name.trim(),
+            attendee_email: email.trim(),
+            message:        message.trim() || undefined,
+            price,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Could not initiate payment.");
+        // Redirect to MyFatoorah hosted payment page
+        window.location.href = data.paymentUrl;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
       setLoading(false);
     }
   }
+
+  const inputClass =
+    "w-full px-4 py-3 rounded-xl border-2 border-teal-100 bg-white text-teal-900 placeholder-gray-400 focus:outline-none focus:border-teal-400 transition-colors text-sm";
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -90,7 +113,7 @@ export default function BookingForm({ eventId, isFree, price, status }: Props) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
-        className="w-full px-4 py-3 rounded-xl border-2 border-teal-100 bg-white text-teal-900 placeholder-gray-400 focus:outline-none focus:border-teal-400 transition-colors text-sm"
+        className={inputClass}
       />
       <input
         type="email"
@@ -98,15 +121,25 @@ export default function BookingForm({ eventId, isFree, price, status }: Props) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        className="w-full px-4 py-3 rounded-xl border-2 border-teal-100 bg-white text-teal-900 placeholder-gray-400 focus:outline-none focus:border-teal-400 transition-colors text-sm"
+        className={inputClass}
       />
       <textarea
         placeholder="Message to organiser (optional)"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={2}
-        className="w-full px-4 py-3 rounded-xl border-2 border-teal-100 bg-white text-teal-900 placeholder-gray-400 focus:outline-none focus:border-teal-400 transition-colors text-sm resize-none"
+        className={inputClass + " resize-none"}
       />
+
+      {!isFree && (
+        <div className="flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-xl px-3 py-2 text-xs text-teal-700">
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Secure payment via <strong className="ml-1">MyFatoorah</strong>
+        </div>
+      )}
 
       {error && (
         <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
@@ -125,10 +158,10 @@ export default function BookingForm({ eventId, isFree, price, status }: Props) {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
-            Confirming your spot…
+            {isFree ? "Confirming your spot…" : "Redirecting to payment…"}
           </>
         ) : (
-          isFree ? "Register — It's Free!" : `Get Tickets — AED ${price}`
+          isFree ? "Register — It's Free!" : `Pay KWD ${price} via MyFatoorah →`
         )}
       </button>
     </form>
