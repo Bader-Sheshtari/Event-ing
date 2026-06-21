@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const MF_BASE_URL = "https://apitest.myfatoorah.com";
-const MF_TOKEN    = "rLtt6JWvbUHDDhsZnfpAhpYk4dxYDQkbcPTyGaKp2TYqhg2IDIDMoKLgsBs3Dxzh";
+const MF_TOKEN    = "SK_KWT_vVZlnnAqu8jRByOWaRPNId4ShzEDNt256dvnjebuyzo52dXjAfRx2ixW5umjWSUx";
 
 export async function POST(req: NextRequest) {
   try {
