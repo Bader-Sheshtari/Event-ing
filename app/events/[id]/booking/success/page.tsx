@@ -40,10 +40,11 @@ export default function BookingSuccessPage() {
           return;
         }
 
-        // 2. Decode attendee info
+        // 2. Decode attendee info (base64url → base64 → JSON)
         let attendee: { event_id: string; attendee_name: string; attendee_email: string; message: string };
         try {
-          attendee = JSON.parse(Buffer.from(encoded, "base64url").toString("utf-8"));
+          const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+          attendee = JSON.parse(atob(base64));
         } catch {
           setMessage("Could not decode payment data.");
           setStage("error");
