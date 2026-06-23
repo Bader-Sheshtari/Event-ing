@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "@/lib/rate-limit";
 
 const MF_BASE_URL = "https://apitest.myfatoorah.com";
-const MF_TOKEN    = "SK_KWT_vVZlnnAqu8jRByOWaRPNId4ShzEDNt256dvnjebuyzo52dXjAfRx2ixW5umjWSUx";
+const MF_TOKEN    = process.env.MYFATOORAH_API_KEY!;
 const APP_URL     = process.env.NEXT_PUBLIC_APP_URL ?? "https://event-ing.vercel.app";
 
 export async function POST(req: NextRequest) {
+  // 5 payment initiations per IP per 10 minutes
+  const ip  = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const allowed = rateLimit(`payment:${ip}`, 5, 10 * 60 * 1000);
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+  }
+
   try {
     const { event_id, attendee_name, attendee_email, message } = await req.json();
 
