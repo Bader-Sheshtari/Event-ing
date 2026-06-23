@@ -84,11 +84,9 @@ export default function BookingForm({ eventId, eventTitle, isFree, price, status
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             event_id:       eventId,
-            event_title:    eventTitle,
             attendee_name:  name.trim(),
             attendee_email: email.trim(),
             message:        message.trim() || undefined,
-            price,
           }),
         });
         const data = await res.json();
